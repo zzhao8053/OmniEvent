@@ -1,8 +1,22 @@
-import axios, { AxiosError, type AxiosRequestConfig } from 'axios'
+import axios, { AxiosError, type AxiosRequestConfig, type AxiosRequestHeaders, type AxiosResponse } from 'axios'
 import { userState } from './userstate'
 import { ApiException, type ApiResponse } from './api'
 
 const BASE_URL = '/api'
+
+export type ApiResponsePromise<T> = Promise<AxiosResponse<ApiResponse<T>>>
+
+interface ApiRequestConfig extends AxiosRequestConfig {
+  readonly headers: AxiosRequestHeaders
+  readonly noAuth?: boolean
+  readonly ignoreBlocked?: boolean
+  readonly ignoreError?: boolean
+  readonly cancelableUuid?: string
+}
+
+let needBlockRequest = false
+const blockedRequests: ((token: string | undefined) => void)[] = []
+const cancelableRequests: Record<string, boolean> = {}
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -13,19 +27,54 @@ const axiosInstance = axios.create({
 })
 
 axiosInstance.interceptors.request.use(
-  (config) => {
+  (config: ApiRequestConfig) => {
     const token = userState.getToken()
-    if (token) {
+    if (token && !config.noAuth) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    if (needBlockRequest && !config.ignoreBlocked) {
+      return new Promise(resolve => {
+        blockedRequests.push(newToken => {
+          if (newToken) {
+            config.headers.Authorization = `Bearer ${newToken}`
+          }
+          resolve(config)
+        })
+      })
+    }
+
     return config
   },
   (error) => Promise.reject(error)
 )
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if ('cancelableUuid' in response.config && response.config.cancelableUuid && cancelableRequests[response.config.cancelableUuid as string]) {
+      delete cancelableRequests[response.config.cancelableUuid as string]
+      return Promise.reject({ canceled: true })
+    }
+    return response
+  },
   (error: AxiosError<ApiResponse>) => {
+    const config = error.response?.config as ApiRequestConfig | undefined
+    if (config && 'cancelableUuid' in config && config.cancelableUuid && cancelableRequests[config.cancelableUuid as string]) {
+      delete cancelableRequests[config.cancelableUuid as string]
+      return Promise.reject({ canceled: true })
+    }
+
+    if (error.response && config && !config.ignoreError && error.response.data && error.response.data.errorCode) {
+      const errorCode = error.response.data.errorCode
+      if (errorCode === 202001 || errorCode === 202002 || errorCode === 202003 ||
+          errorCode === 202004 || errorCode === 202005 || errorCode === 202006 ||
+          errorCode === 202012) {
+        userState.clearToken()
+        window.location.href = '/login'
+        return Promise.reject({ processed: true })
+      }
+    }
+
     if (error.response) {
       const data = error.response.data
       if (data?.errorCode) {
@@ -41,7 +90,7 @@ axiosInstance.interceptors.response.use(
   }
 )
 
-function handleResponse<T>(response: axios.AxiosResponse<ApiResponse<T>>): T {
+function handleResponse<T>(response: AxiosResponse<ApiResponse<T>>): T {
   if (response.data.success && response.data.result !== undefined) {
     return response.data.result
   }
@@ -123,6 +172,24 @@ class UserService {
     const response = await axiosInstance.post('/v1/users/avatar/remove.json')
     return handleResponse(response)
   }
+
+  async authorize2FA(passcode: string, token: string): ApiResponsePromise<LoginResponse> {
+    return axiosInstance.post<ApiResponse<LoginResponse>>('2fa/authorize.json', { passcode }, {
+      noAuth: true,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    } as ApiRequestConfig)
+  }
+
+  async authorize2FAByBackupCode(recoveryCode: string, token: string): ApiResponsePromise<LoginResponse> {
+    return axiosInstance.post<ApiResponse<LoginResponse>>('2fa/recovery.json', { recoveryCode }, {
+      noAuth: true,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    } as ApiRequestConfig)
+  }
 }
 
 class TokenService {
@@ -145,7 +212,31 @@ class TokenService {
     const response = await axiosInstance.post('/v1/tokens/revoke_all.json')
     return handleResponse(response)
   }
+
+  async refreshTokenBlocking(): Promise<string | undefined> {
+    needBlockRequest = true
+    try {
+      const response = await axiosInstance.post<ApiResponse<{ newToken: string }>>('/v1/tokens/refresh.json', {}, {
+        ignoreBlocked: true
+      } as ApiRequestConfig)
+      const newToken = response.data.result?.newToken
+      blockedRequests.forEach(func => func(newToken))
+      blockedRequests.length = 0
+      return newToken
+    } finally {
+      needBlockRequest = false
+    }
+  }
 }
 
 export const userService = new UserService()
 export const tokenService = new TokenService()
+
+export const apiService = {
+  setLocale: (locale: string) => {
+    axiosInstance.defaults.headers.common['Accept-Language'] = locale
+  },
+  cancelRequest: (cancelableUuid: string) => {
+    cancelableRequests[cancelableUuid] = true
+  }
+}
