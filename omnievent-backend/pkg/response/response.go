@@ -15,7 +15,7 @@ type SuccessResponse struct {
 
 type ErrorResponse struct {
 	Success     bool   `json:"success"`
-	ErrorCode   int    `json:"errorCode,omitempty"`
+	ErrorCode   int32  `json:"errorCode,omitempty"`
 	ErrorMessage string `json:"errorMessage,omitempty"`
 	Path        string `json:"path,omitempty"`
 }
@@ -35,7 +35,7 @@ func Error(c *gin.Context, status int, message string) {
 	})
 }
 
-func ErrorWithCode(c *gin.Context, status int, code int, message string) {
+func ErrorWithCode(c *gin.Context, status int, code int32, message string) {
 	c.JSON(status, ErrorResponse{
 		Success:     false,
 		ErrorCode:   code,
