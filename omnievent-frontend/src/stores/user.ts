@@ -65,6 +65,14 @@ export const useUserStore = defineStore('user', () => {
     userState.clearToken()
   }
 
+  async function verify2FA(tempToken: string, passcode: string) {
+    const response = await userService.authorize2FA(passcode, tempToken)
+    token.value = response.token
+    user.value = response.user || null
+    userState.setToken(response.token)
+    return response
+  }
+
   return {
     token,
     user,
@@ -74,6 +82,7 @@ export const useUserStore = defineStore('user', () => {
     fetchProfile,
     updateProfile,
     refreshToken,
-    logout
+    logout,
+    verify2FA
   }
 })

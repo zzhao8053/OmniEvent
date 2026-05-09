@@ -199,6 +199,13 @@ OmniEvent/
 ## Project Rules
 
 *   **语言规则**: 始终使用中文进行对话。
+*   **Git Commit**: 所有 git commit 信息必须使用中文撰写。
 *   **Documentation Location**: All design documents, architecture specs, and planning files MUST be created or updated in the **current root directory** (`./`).
 *   **No Subdirectories for Docs**: Do not create or use a `docs/` or `plans/` folder unless explicitly instructed for a specific task.
 *   **Naming Convention**: Design documents should follow the pattern `DESIGN_*.md` and planning documents should follow `PLAN_*.md`.
+
+
+### superpowers
+
+* plan 文档保存到 `./docs/superpowers/plans/`
+* spec 文档保存到 `./docs/superpowers/specs/`

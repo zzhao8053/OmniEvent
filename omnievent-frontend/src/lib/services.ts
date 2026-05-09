@@ -173,22 +173,24 @@ class UserService {
     return handleResponse(response)
   }
 
-  async authorize2FA(passcode: string, token: string): ApiResponsePromise<LoginResponse> {
-    return axiosInstance.post<ApiResponse<LoginResponse>>('2fa/authorize.json', { passcode }, {
+  async authorize2FA(passcode: string, token: string): Promise<LoginResponse> {
+    const response = await axiosInstance.post<ApiResponse<LoginResponse>>('2fa/authorize.json', { passcode }, {
       noAuth: true,
       headers: {
         Authorization: `Bearer ${token}`
       }
     } as ApiRequestConfig)
+    return handleResponse(response)
   }
 
-  async authorize2FAByBackupCode(recoveryCode: string, token: string): ApiResponsePromise<LoginResponse> {
-    return axiosInstance.post<ApiResponse<LoginResponse>>('2fa/recovery.json', { recoveryCode }, {
+  async authorize2FAByBackupCode(recoveryCode: string, token: string): Promise<LoginResponse> {
+    const response = await axiosInstance.post<ApiResponse<LoginResponse>>('2fa/recovery.json', { recoveryCode }, {
       noAuth: true,
       headers: {
         Authorization: `Bearer ${token}`
       }
     } as ApiRequestConfig)
+    return handleResponse(response)
   }
 }
 
