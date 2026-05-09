@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"gopkg.in/ini.v1"
+
+	"omnievent-backend/pkg/storage"
 )
 
 const (
@@ -286,6 +288,31 @@ func loadConfiguration() *Config {
 	}
 	if cfg.Security.SecretKey == "" {
 		cfg.Security.SecretKey = generateSecretKey(32)
+	}
+
+	// Initialize storage
+	storageConfig := &storage.StorageConfig{
+		Type:                cfg.Storage.Type,
+		LocalFileSystemPath: cfg.Storage.LocalFileSystemPath,
+		MinIOEndpoint:       cfg.Storage.MinIOEndpoint,
+		MinIOLocation:        cfg.Storage.MinIOLocation,
+		MinIOAccessKeyID:     cfg.Storage.MinIOAccessKeyID,
+		MinIOSecretAccessKey: cfg.Storage.MinIOSecretAccessKey,
+		MinIOUseSSL:          cfg.Storage.MinIOUseSSL,
+		MinIOSkipTLSVerify:   cfg.Storage.MinIOSkipTLSVerify,
+		MinIOBucket:          cfg.Storage.MinIOBucket,
+		MinIORootPath:        cfg.Storage.MinIORootPath,
+		WebDAVURL:            cfg.Storage.WebDAVURL,
+		WebDAVUsername:       cfg.Storage.WebDAVUsername,
+		WebDAVPassword:       cfg.Storage.WebDAVPassword,
+		WebDAVRootPath:       cfg.Storage.WebDAVRootPath,
+		WebDAVRequestTimeout: cfg.Storage.WebDAVRequestTimeout,
+		WebDAVProxy:          cfg.Storage.WebDAVProxy,
+		WebDAVSkipTLSVerify:  cfg.Storage.WebDAVSkipTLSVerify,
+	}
+	storage.SetStorageConfig(storageConfig)
+	if err := storage.InitializeStorageContainer(); err != nil {
+		fmt.Printf("Error: failed to initialize storage: %v\n", err)
 	}
 
 	return cfg

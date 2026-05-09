@@ -18,4 +18,5 @@ var (
 	ErrLoggingFileRenameFailed   = NewSystemError(SystemSubcategoryLogging, 2, http.StatusInternalServerError, "log file rename failed")
 	ErrSystemError               = NewSystemError(SystemSubcategoryDefault, 0, http.StatusInternalServerError, "system error")
 	ErrInvalidStorageType        = NewSystemError(SystemSubcategorySetting, 0, http.StatusInternalServerError, "invalid storage type")
+	ErrOperationFailed           = NewSystemError(SystemSubcategoryDefault, 1, http.StatusInternalServerError, "operation failed")
 )

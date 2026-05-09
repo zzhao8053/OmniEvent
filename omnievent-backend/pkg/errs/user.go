@@ -30,4 +30,6 @@ var (
 	ErrMinUsernameLength          = NewNormalError(NormalSubcategoryUser, 21, http.StatusBadRequest, "username is too short")
 	ErrMaxUsernameLength          = NewNormalError(NormalSubcategoryUser, 22, http.StatusBadRequest, "username is too long")
 	ErrMinPasswordLength          = NewNormalError(NormalSubcategoryUser, 23, http.StatusBadRequest, "password is too short")
+	ErrNothingWillBeUpdated       = NewNormalError(NormalSubcategoryUser, 24, http.StatusBadRequest, "nothing will be updated")
+	ErrImageTypeNotSupported      = NewNormalError(NormalSubcategoryUser, 25, http.StatusBadRequest, "image type is not supported")
 )

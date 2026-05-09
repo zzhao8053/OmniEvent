@@ -69,6 +69,7 @@ func main() {
 	tokenService := service.NewTokenService(userRepo)
 
 	userHandler := api.NewUserHandler(userService, tokenService)
+	avatarHandler := api.NewAvatarHandler(userService)
 	authHandler := api.NewAuthHandler(userService, tokenService)
 	tokenHandler := api.NewTokenHandler(tokenService)
 	tokenHandler.SetUserService(userService)
@@ -88,6 +89,8 @@ func main() {
 		v1.POST("/users/profile/update.json", apipkg.BindApiWithTokenUpdate(userHandler.UpdateProfile))
 		v1.POST("/users/avatar/update.json", apipkg.BindApiWithTokenUpdate(userHandler.UpdateAvatar))
 		v1.POST("/users/avatar/remove.json", apipkg.BindApiWithTokenUpdate(userHandler.RemoveAvatar))
+		v1.POST("/users/avatar/upload.json", apipkg.BindApiWithTokenUpdate(avatarHandler.UploadAvatar))
+		v1.GET("/avatars/:fileName", apipkg.BindAvatarApi(avatarHandler.GetAvatar))
 		v1.POST("/users/verify_email/resend.json", apipkg.BindApi(userHandler.SendVerifyEmail))
 
 		v1.GET("/tokens/list.json", apipkg.BindApi(tokenHandler.ListTokens))

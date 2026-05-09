@@ -71,6 +71,25 @@ func BindApiWithCookie(fn ApiHandlerFunc) gin.HandlerFunc {
 	}
 }
 
+// AvatarApiHandlerFunc 头像 API 处理器函数类型 (返回字节数据)
+type AvatarApiHandlerFunc func(*context.WebContext) ([]byte, string, *errs.Error)
+
+// BindAvatarApi 绑定头像 API 请求 (直接返回图片数据)
+func BindAvatarApi(fn AvatarApiHandlerFunc) gin.HandlerFunc {
+	return func(ginCtx *gin.Context) {
+		c := context.WrapWebContext(ginCtx)
+		data, contentType, err := fn(c)
+
+		if err != nil {
+			response.ErrorWithError(ginCtx, err)
+		} else {
+			ginCtx.Header("Content-Type", contentType)
+			ginCtx.Header("Content-Length", fmt.Sprintf("%d", len(data)))
+			ginCtx.Data(http.StatusOK, contentType, data)
+		}
+	}
+}
+
 // BindOptions 绑定选项
 type BindOptions struct {
 	TrimSpaces bool
@@ -127,7 +146,7 @@ func bindWith(c *gin.Context, obj interface{}, binder binder, opts ...BindOption
 			return validationError(validationErrors)
 		}
 
-		return errs.ErrInvalidRequest
+		return errs.ErrValidationFailed
 	}
 
 	if options.TrimSpaces {
@@ -148,17 +167,17 @@ func validationError(validationErrs validator.ValidationErrors) *errs.Error {
 
 		switch tag {
 		case "required":
-			return errs.NewNormalError(errs.SubCategoryValidation, 1, 400, field+" is required")
+			return errs.NewNormalError(errs.NormalSubcategoryValidation, 1, 400, field+" is required")
 		case "email":
-			return errs.NewNormalError(errs.SubCategoryValidation, 2, 400, field+" must be a valid email")
+			return errs.NewNormalError(errs.NormalSubcategoryValidation, 2, 400, field+" must be a valid email")
 		case "min":
-			return errs.NewNormalError(errs.SubCategoryValidation, 3, 400, field+" is too short")
+			return errs.NewNormalError(errs.NormalSubcategoryValidation, 3, 400, field+" is too short")
 		case "max":
-			return errs.NewNormalError(errs.SubCategoryValidation, 4, 400, field+" is too long")
+			return errs.NewNormalError(errs.NormalSubcategoryValidation, 4, 400, field+" is too long")
 		case "eqfield":
-			return errs.NewNormalError(errs.SubCategoryValidation, 5, 400, field+" does not match")
+			return errs.NewNormalError(errs.NormalSubcategoryValidation, 5, 400, field+" does not match")
 		default:
-			return errs.NewNormalError(errs.SubCategoryValidation, 9, 400, field+" validation failed: "+tag)
+			return errs.NewNormalError(errs.NormalSubcategoryValidation, 9, 400, field+" validation failed: "+tag)
 		}
 	}
 	return errs.ErrValidationFailed
