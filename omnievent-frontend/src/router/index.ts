@@ -46,3 +46,5 @@ router.beforeEach((to, from, next) => {
 })
 
 import { useUserStore } from '@/stores/user'
+
+export default router

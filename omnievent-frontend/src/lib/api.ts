@@ -3,6 +3,16 @@ export interface ApiResponse<T> {
     readonly result: T;
 }
 
+export class ApiException extends Error {
+    constructor(
+        public code: number,
+        public message: string,
+        public data?: any
+    ) {
+        super(message);
+    }
+}
+
 export interface ErrorResponse {
     readonly success: boolean;
     readonly errorCode: number;
