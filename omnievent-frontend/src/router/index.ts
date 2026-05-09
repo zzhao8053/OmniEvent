@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -26,6 +27,16 @@ const routes: RouteRecordRaw[] = [
     path: '/forget-password',
     name: 'ForgetPassword',
     component: () => import('@/views/desktop/ForgetPasswordPage.vue')
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('@/views/desktop/ResetPasswordPage.vue')
+  },
+  {
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: () => import('@/views/desktop/VerifyEmailPage.vue')
   }
 ]
 
@@ -44,7 +55,5 @@ router.beforeEach((to, from, next) => {
     next()
   }
 })
-
-import { useUserStore } from '@/stores/user'
 
 export default router
