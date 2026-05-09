@@ -21,6 +21,11 @@ const routes: RouteRecordRaw[] = [
     name: 'Profile',
     component: () => import('@/views/desktop/ProfilePage.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/forget-password',
+    name: 'ForgetPassword',
+    component: () => import('@/views/desktop/ForgetPasswordPage.vue')
   }
 ]
 
