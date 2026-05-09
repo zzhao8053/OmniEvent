@@ -65,7 +65,7 @@ func main() {
 
 	// Initialize services
 	userRepo := repository.NewUserRepository()
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService()
 	tokenService := service.NewTokenService(userRepo)
 
 	userHandler := api.NewUserHandler(userService)
