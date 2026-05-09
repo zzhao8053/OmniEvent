@@ -25,6 +25,11 @@ type Config struct {
 	JWT      JWTConfig
 	Security SecurityConfig
 	User     UserConfig
+	Uuid     UuidConfig
+}
+
+type UuidConfig struct {
+	ServerId uint8
 }
 
 type GlobalConfig struct {
@@ -202,6 +207,11 @@ func loadConfiguration() *Config {
 		MaxPasswordLen: getConfigInt(file, "user", "max_password_length", 128),
 	}
 
+	// Uuid config
+	cfg.Uuid = UuidConfig{
+		ServerId: uint8(getConfigInt(file, "uuid", "server_id", 1)),
+	}
+
 	// Apply environment variable overrides
 	applyEnvOverrides(cfg)
 
@@ -254,6 +264,12 @@ func applyEnvOverrides(cfg *Config) {
 	if port := os.Getenv(fmt.Sprintf("%s_SERVER_PORT", EnvPrefix)); port != "" {
 		if p, err := strconv.Atoi(port); err == nil {
 			cfg.Server.HttpPort = p
+		}
+	}
+	// Uuid
+	if serverId := os.Getenv(fmt.Sprintf("%s_UUID_SERVER_ID", EnvPrefix)); serverId != "" {
+		if id, err := strconv.Atoi(serverId); err == nil {
+			cfg.Uuid.ServerId = uint8(id)
 		}
 	}
 }
