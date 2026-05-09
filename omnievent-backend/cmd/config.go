@@ -27,6 +27,28 @@ type Config struct {
 	User     UserConfig
 	Uuid     UuidConfig
 	SMTP     SMTPConfig
+	Storage  StorageConfig
+}
+
+// StorageConfig represents storage configuration
+type StorageConfig struct {
+	Type                 string
+	LocalFileSystemPath  string
+	MinIOEndpoint        string
+	MinIOLocation        string
+	MinIOAccessKeyID     string
+	MinIOSecretAccessKey string
+	MinIOUseSSL          bool
+	MinIOSkipTLSVerify   bool
+	MinIOBucket          string
+	MinIORootPath        string
+	WebDAVURL            string
+	WebDAVUsername       string
+	WebDAVPassword       string
+	WebDAVRootPath       string
+	WebDAVRequestTimeout int
+	WebDAVProxy          string
+	WebDAVSkipTLSVerify  bool
 }
 
 type SMTPConfig struct {
@@ -232,6 +254,27 @@ func loadConfiguration() *Config {
 		Password:      getConfigString(file, "smtp", "password", ""),
 		FromAddress:   getConfigString(file, "smtp", "from_address", ""),
 		SkipTLSVerify: getConfigBool(file, "smtp", "skip_tls_verify", false),
+	}
+
+	// Storage config
+	cfg.Storage = StorageConfig{
+		Type:                  getConfigString(file, "storage", "type", "local_filesystem"),
+		LocalFileSystemPath:   getConfigString(file, "storage", "local_filesystem_path", ""),
+		MinIOEndpoint:         getConfigString(file, "storage", "minio_endpoint", ""),
+		MinIOLocation:         getConfigString(file, "storage", "minio_location", ""),
+		MinIOAccessKeyID:      getConfigString(file, "storage", "minio_access_key_id", ""),
+		MinIOSecretAccessKey:  getConfigString(file, "storage", "minio_secret_access_key", ""),
+		MinIOUseSSL:           getConfigBool(file, "storage", "minio_use_ssl", false),
+		MinIOSkipTLSVerify:    getConfigBool(file, "storage", "minio_skip_tls_verify", false),
+		MinIOBucket:           getConfigString(file, "storage", "minio_bucket", ""),
+		MinIORootPath:         getConfigString(file, "storage", "minio_root_path", ""),
+		WebDAVURL:             getConfigString(file, "storage", "webdav_url", ""),
+		WebDAVUsername:        getConfigString(file, "storage", "webdav_username", ""),
+		WebDAVPassword:        getConfigString(file, "storage", "webdav_password", ""),
+		WebDAVRootPath:        getConfigString(file, "storage", "webdav_root_path", ""),
+		WebDAVRequestTimeout:  getConfigInt(file, "storage", "webdav_request_timeout", 10000),
+		WebDAVProxy:           getConfigString(file, "storage", "webdav_proxy", "system"),
+		WebDAVSkipTLSVerify:   getConfigBool(file, "storage", "webdav_skip_tls_verify", false),
 	}
 
 	// Apply environment variable overrides
