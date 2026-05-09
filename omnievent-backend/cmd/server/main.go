@@ -68,15 +68,17 @@ func main() {
 	userService := service.NewUserService()
 	tokenService := service.NewTokenService(userRepo)
 
-	userHandler := api.NewUserHandler(userService)
+	userHandler := api.NewUserHandler(userService, tokenService)
 	authHandler := api.NewAuthHandler(userService, tokenService)
 	tokenHandler := api.NewTokenHandler(tokenService)
+	tokenHandler.SetUserService(userService)
+	forgetPasswordHandler := api.NewForgetPasswordHandler(userService, tokenService)
 
 	// Public routes
 	r.POST("/api/register.json", apipkg.BindApi(authHandler.Register))
 	r.POST("/api/authorize.json", apipkg.BindApiWithTokenUpdate(authHandler.Login))
-	r.POST("/api/forget_password/request.json", apipkg.BindApi(authHandler.ForgetPassword))
-	r.POST("/api/forget_password/reset/by_token.json", apipkg.BindApi(authHandler.ResetPassword))
+	r.POST("/api/forget_password/request.json", apipkg.BindApi(forgetPasswordHandler.UserForgetPasswordRequest))
+	r.POST("/api/forget_password/reset/by_token.json", apipkg.BindApi(forgetPasswordHandler.UserResetPassword))
 
 	// Protected routes
 	v1 := r.Group("/api/v1")
@@ -86,11 +88,15 @@ func main() {
 		v1.POST("/users/profile/update.json", apipkg.BindApiWithTokenUpdate(userHandler.UpdateProfile))
 		v1.POST("/users/avatar/update.json", apipkg.BindApiWithTokenUpdate(userHandler.UpdateAvatar))
 		v1.POST("/users/avatar/remove.json", apipkg.BindApiWithTokenUpdate(userHandler.RemoveAvatar))
+		v1.POST("/users/verify_email/resend.json", apipkg.BindApi(userHandler.SendVerifyEmail))
 
 		v1.GET("/tokens/list.json", apipkg.BindApi(tokenHandler.ListTokens))
 		v1.POST("/tokens/refresh.json", apipkg.BindApiWithTokenUpdate(tokenHandler.RefreshToken))
 		v1.POST("/tokens/revoke.json", apipkg.BindApi(tokenHandler.RevokeToken))
 		v1.POST("/tokens/revoke_all.json", apipkg.BindApi(tokenHandler.RevokeAllTokens))
+		v1.POST("/tokens/revoke_current.json", apipkg.BindApi(tokenHandler.RevokeCurrentToken))
+		v1.POST("/tokens/generate_api.json", apipkg.BindApi(tokenHandler.GenerateAPIToken))
+		v1.POST("/tokens/generate_mcp.json", apipkg.BindApi(tokenHandler.GenerateMCPToken))
 	}
 
 	// Start server
