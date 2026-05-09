@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"regexp"
 	"strings"
 )
 
@@ -72,22 +71,76 @@ func Capitalize(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
-func IsValidUsername(username string) bool {
-	pattern := regexp.MustCompile(`^(?i)[a-z0-9_-]+$`)
-	return len(username) <= 32 && pattern.MatchString(username)
+func SubString(str string, start int, length int) string {
+	chars := []rune(str)
+	realLength := len(chars)
+	end := 0
+
+	if start < 0 {
+		start = realLength + start
+	}
+
+	end = start + length
+
+	if start > end {
+		start, end = end, start
+	}
+
+	if start < 0 {
+		start = 0
+	}
+
+	if start > realLength {
+		start = realLength
+	}
+
+	if end < 0 {
+		end = 0
+	}
+
+	if end > realLength {
+		end = realLength
+	}
+
+	return string(chars[start:end])
 }
 
-func IsValidEmail(email string) bool {
-	emailPattern := regexp.MustCompile(`^(?i)(?:[a-z0-9!#$%&'*+/=?^_` + "`" + `{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_` + "`" + `{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$`)
-	return len(email) <= 100 && emailPattern.MatchString(email)
+func ContainsAnyString(s string, substrs []string) bool {
+	for i := 0; i < len(substrs); i++ {
+		if strings.Index(s, substrs[i]) >= 0 {
+			return true
+		}
+	}
+
+	return false
 }
 
-func IsValidNickName(nickname string) bool {
-	return len(nickname) <= 64
+func GetFirstLowerCharString(s string) string {
+	if s == "" {
+		return s
+	}
+
+	chars := []rune(s)
+
+	if chars[0] >= 'a' && chars[0] <= 'z' {
+		return s
+	}
+
+	chars[0] = chars[0] + 32
+	return string(chars)
 }
 
-var hexRGBColorPattern = regexp.MustCompile(`^(?i)([0-9a-f]{6}|[0-9a-f]{3})$`)
+func ContainsOnlyOneRune(s string, r rune) bool {
+	if len(s) < 1 {
+		return false
+	}
 
-func IsValidHexRGBColor(color string) bool {
-	return hexRGBColorPattern.MatchString(color)
+	for i := 0; i < len(s); i++ {
+		if rune(s[i]) != r {
+			return false
+		}
+	}
+
+	return true
 }
+

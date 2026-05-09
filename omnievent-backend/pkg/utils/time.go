@@ -78,6 +78,14 @@ func StringToInt64WithDefault(s string, defaultVal int64) int64 {
 	return i
 }
 
+func Float64ToString(num float64) string {
+	return strconv.FormatFloat(num, 'f', -1, 64)
+}
+
+func StringToFloat64(str string) (float64, error) {
+	return strconv.ParseFloat(str, 64)
+}
+
 func MinInt(a, b int) int {
 	if a < b {
 		return a
@@ -104,4 +112,8 @@ func MaxInt64(a, b int64) int64 {
 		return a
 	}
 	return b
+}
+
+func FormatUnixTimeToLongDateTimeInServerTimezone(unix int64) string {
+	return FormatUnixTime(unix, "2006-01-02 15:04:05")
 }
