@@ -8,8 +8,11 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/lib/pq v1.10.7
 	github.com/redis/go-redis/v9 v9.3.0
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
+	golang.org/x/crypto v0.49.0
 	gopkg.in/ini.v1 v1.67.2
+	gopkg.in/mail.v2 v2.3.1
 	xorm.io/xorm v1.3.3
 )
 
@@ -37,11 +40,11 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	xorm.io/builder v0.3.11-0.20220531020008-1bd24a7dc978 // indirect
 )

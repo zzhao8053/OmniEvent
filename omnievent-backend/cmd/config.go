@@ -26,6 +26,17 @@ type Config struct {
 	Security SecurityConfig
 	User     UserConfig
 	Uuid     UuidConfig
+	SMTP     SMTPConfig
+}
+
+type SMTPConfig struct {
+	EnableSMTP    bool
+	Host          string
+	Port          int
+	User          string
+	Password      string
+	FromAddress   string
+	SkipTLSVerify bool
 }
 
 type UuidConfig struct {
@@ -212,6 +223,17 @@ func loadConfiguration() *Config {
 		ServerId: uint8(getConfigInt(file, "uuid", "server_id", 1)),
 	}
 
+	// SMTP config
+	cfg.SMTP = SMTPConfig{
+		EnableSMTP:    getConfigBool(file, "smtp", "enable_smtp", false),
+		Host:          getConfigString(file, "smtp", "host", ""),
+		Port:          getConfigInt(file, "smtp", "port", 587),
+		User:          getConfigString(file, "smtp", "user", ""),
+		Password:      getConfigString(file, "smtp", "password", ""),
+		FromAddress:   getConfigString(file, "smtp", "from_address", ""),
+		SkipTLSVerify: getConfigBool(file, "smtp", "skip_tls_verify", false),
+	}
+
 	// Apply environment variable overrides
 	applyEnvOverrides(cfg)
 
@@ -271,6 +293,27 @@ func applyEnvOverrides(cfg *Config) {
 		if id, err := strconv.Atoi(serverId); err == nil {
 			cfg.Uuid.ServerId = uint8(id)
 		}
+	}
+	// SMTP
+	if smtpHost := os.Getenv(fmt.Sprintf("%s_SMTP_HOST", EnvPrefix)); smtpHost != "" {
+		cfg.SMTP.Host = smtpHost
+	}
+	if smtpPort := os.Getenv(fmt.Sprintf("%s_SMTP_PORT", EnvPrefix)); smtpPort != "" {
+		if p, err := strconv.Atoi(smtpPort); err == nil {
+			cfg.SMTP.Port = p
+		}
+	}
+	if smtpUser := os.Getenv(fmt.Sprintf("%s_SMTP_USER", EnvPrefix)); smtpUser != "" {
+		cfg.SMTP.User = smtpUser
+	}
+	if smtpPassword := os.Getenv(fmt.Sprintf("%s_SMTP_PASSWORD", EnvPrefix)); smtpPassword != "" {
+		cfg.SMTP.Password = smtpPassword
+	}
+	if smtpFrom := os.Getenv(fmt.Sprintf("%s_SMTP_FROM_ADDRESS", EnvPrefix)); smtpFrom != "" {
+		cfg.SMTP.FromAddress = smtpFrom
+	}
+	if smtpEnable := os.Getenv(fmt.Sprintf("%s_SMTP_ENABLE", EnvPrefix)); smtpEnable != "" {
+		cfg.SMTP.EnableSMTP = strings.ToLower(smtpEnable) == "true" || smtpEnable == "1"
 	}
 }
 
