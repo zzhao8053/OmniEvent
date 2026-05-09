@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, LoginRequest, RegisterRequest } from '@/models/user'
 import { userState } from '@/lib/userstate'
-import { userService } from '@/lib/services'
+import { userService, tokenService } from '@/lib/services'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(userState.getToken())
@@ -40,7 +40,26 @@ export const useUserStore = defineStore('user', () => {
     return updated
   }
 
-  function logout() {
+  async function refreshToken(userTokenId?: number) {
+    if (!token.value) return null
+
+    try {
+      const result = await tokenService.refreshToken(userTokenId || 0)
+      token.value = result.token
+      userState.setToken(result.token)
+      return result.token
+    } catch {
+      // Refresh failed, token may be invalid
+      return null
+    }
+  }
+
+  async function logout() {
+    try {
+      await tokenService.revokeAllTokens()
+    } catch {
+      // Ignore errors during logout
+    }
     token.value = null
     user.value = null
     userState.clearToken()
@@ -54,6 +73,7 @@ export const useUserStore = defineStore('user', () => {
     register,
     fetchProfile,
     updateProfile,
+    refreshToken,
     logout
   }
 })
