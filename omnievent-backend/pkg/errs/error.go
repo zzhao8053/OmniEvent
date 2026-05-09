@@ -1,130 +1,124 @@
 package errs
 
 import (
-	"fmt"
-	"net/http"
+	"strings"
 )
 
-type ErrorCategory int
-
-const (
-	CategorySystem ErrorCategory = 1
-	CategoryNormal ErrorCategory = 2
-)
-
-type ErrorSubCategory int
-
-const (
-	// System subcategories
-	SubCategoryDatabase ErrorSubCategory = 1
-	SubCategoryMail     ErrorSubCategory = 2
-	SubCategoryLogging  ErrorSubCategory = 3
-	SubCategoryCron     ErrorSubCategory = 4
-	SubCategorySecurity ErrorSubCategory = 5
-	SubCategoryStorage  ErrorSubCategory = 6
-	SubCategoryConfig   ErrorSubCategory = 7
-
-	// Normal subcategories
-	SubCategoryUser        ErrorSubCategory = 1
-	SubCategoryToken       ErrorSubCategory = 2
-	SubCategoryTwoFactor   ErrorSubCategory = 3
-	SubCategoryAccount     ErrorSubCategory = 4
-	SubCategoryTransaction ErrorSubCategory = 5
-	SubCategoryCategory    ErrorSubCategory = 6
-	SubCategoryTag         ErrorSubCategory = 7
-	SubCategoryTemplate    ErrorSubCategory = 8
-	SubCategoryPicture     ErrorSubCategory = 9
-	SubCategoryData        ErrorSubCategory = 10
-	SubCategoryValidation  ErrorSubCategory = 11
-)
-
+// Error represents the specific error returned to user
 type Error struct {
-	Category      ErrorCategory
-	SubCategory   ErrorSubCategory
-	Index         int
+	Category       ErrorCategory
+	SubCategory    int32
+	Index          int32
 	HttpStatusCode int
-	Message       string
-	BaseError     error
-	Context       map[string]interface{}
-}
-
-func (e *Error) Error() string {
-	if e.BaseError != nil {
-		return fmt.Sprintf("%s: %v", e.Message, e.BaseError)
-	}
-	return e.Message
-}
-
-func (e *Error) Code() int {
-	return int(e.Category)*100000 + int(e.SubCategory)*1000 + e.Index
-}
-
-func (e *Error) WithContext(key string, value interface{}) *Error {
-	if e.Context == nil {
-		e.Context = make(map[string]interface{})
-	}
-	e.Context[key] = value
-	return e
-}
-
-func (e *Error) WithBaseError(base error) *Error {
-	e.BaseError = base
-	return e
+	Message        string
+	BaseError      []error
+	Context        any
 }
 
 type MultiErrors struct {
-	Errors []*Error
+	errors []error
 }
 
-func (m *MultiErrors) Add(err *Error) {
-	m.Errors = append(m.Errors, err)
+// Error returns the error message
+func (err *Error) Error() string {
+	return err.Message
 }
 
-func (m *MultiErrors) Error() string {
-	if len(m.Errors) == 0 {
-		return ""
-	}
-	return fmt.Sprintf("%d errors occurred", len(m.Errors))
+// Code returns the error code
+func (err *Error) Code() int32 {
+	return int32(err.Category)*100000 + err.SubCategory*1000 + err.Index
 }
 
-func NewSystemError(subCategory ErrorSubCategory, index int, httpStatus int, message string) *Error {
+// New returns a new error instance
+func New(category ErrorCategory, subCategory int32, index int32, httpStatusCode int, message string, baseError ...error) *Error {
 	return &Error{
-		Category:       CategorySystem,
+		Category:       category,
 		SubCategory:    subCategory,
 		Index:          index,
-		HttpStatusCode: httpStatus,
+		HttpStatusCode: httpStatusCode,
 		Message:        message,
+		BaseError:      baseError,
 	}
 }
 
-func NewNormalError(subCategory ErrorSubCategory, index int, httpStatus int, message string) *Error {
+// Error returns the error message
+func (err *MultiErrors) Error() string {
+	if len(err.errors) == 1 {
+		return err.errors[0].Error()
+	}
+
+	var ret strings.Builder
+	var lastErrorChar byte
+
+	ret.WriteString("multi errors: ")
+
+	for i := 0; i < len(err.errors); i++ {
+		if i > 0 {
+			if lastErrorChar == '.' {
+				ret.WriteString(" ")
+			} else {
+				ret.WriteString(", ")
+			}
+		}
+
+		errorContent := err.errors[i].Error()
+		lastErrorChar = errorContent[len(errorContent)-1]
+		ret.WriteString(errorContent)
+	}
+
+	return ret.String()
+}
+
+// NewSystemError returns a new system error instance
+func NewSystemError(subCategory int32, index int32, httpStatusCode int, message string) *Error {
+	return New(CATEGORY_SYSTEM, subCategory, index, httpStatusCode, message)
+}
+
+// NewNormalError returns a new normal error instance
+func NewNormalError(subCategory int32, index int32, httpStatusCode int, message string) *Error {
+	return New(CATEGORY_NORMAL, subCategory, index, httpStatusCode, message)
+}
+
+// NewErrorWithContext returns a new error instance with specified context
+func NewErrorWithContext(baseError *Error, context any) *Error {
 	return &Error{
-		Category:       CategoryNormal,
-		SubCategory:    subCategory,
-		Index:          index,
-		HttpStatusCode: httpStatus,
-		Message:        message,
+		Category:       baseError.Category,
+		SubCategory:    baseError.SubCategory,
+		Index:          baseError.Index,
+		HttpStatusCode: baseError.HttpStatusCode,
+		Message:        baseError.Message,
+		BaseError:      baseError.BaseError,
+		Context:        context,
 	}
 }
 
-func Or(err error, defaultErr error) error {
-	if err == nil {
+// NewMultiErrorOrNil returns a new multi error instance
+func NewMultiErrorOrNil(errors ...error) error {
+	count := len(errors)
+
+	if count < 1 {
 		return nil
+	} else if count == 1 {
+		return errors[0]
 	}
-	if _, ok := err.(*Error); ok {
-		return err
+
+	return &MultiErrors{
+		errors: errors,
 	}
-	return defaultErr
 }
 
+// Or would return the error from err parameter if the this error is defined in this project,
+// or return the default error
+func Or(err error, defaultErr *Error) *Error {
+	if finalError, ok := err.(*Error); ok {
+		return finalError
+	} else {
+		return defaultErr
+	}
+}
+
+// IsCustomError returns whether this error is defined in this project
 func IsCustomError(err error) bool {
 	_, ok := err.(*Error)
 	return ok
-}
-
-func GetHttpStatusCode(err error) int {
-	if e, ok := err.(*Error); ok {
-		return e.HttpStatusCode
-	}
-	return http.StatusInternalServerError
 }
